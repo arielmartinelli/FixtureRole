@@ -195,6 +195,7 @@ export const getMatches = async () => {
     failReason: m.fail_reason,
     updatedBy: m.updated_by,
     reviews: m.reviews || {},
+    confirmations: m.confirmations || {},
   }));
 };
 
@@ -210,6 +211,7 @@ export const saveMatches = async (newMatches) => {
     fail_reason: m.failReason,
     updated_by: m.updatedBy,
     reviews: m.reviews || {},
+    confirmations: m.confirmations || {},
   }));
   
   const { error } = await supabase.from('matches').upsert(mapped);
@@ -230,6 +232,12 @@ export const updateMatch = async (matchId, updatedFields) => {
   if (updatedFields.failReason !== undefined) mapped.fail_reason = updatedFields.failReason;
   if (updatedFields.updatedBy !== undefined) mapped.updated_by = updatedFields.updatedBy;
   if (updatedFields.reviews !== undefined) mapped.reviews = updatedFields.reviews;
+  if (updatedFields.confirmations !== undefined) mapped.confirmations = updatedFields.confirmations;
+
+  // Clear confirmations if dateTime or objectionId is explicitly modified (re-agreement required)
+  if (updatedFields.dateTime !== undefined || updatedFields.objectionId !== undefined) {
+    mapped.confirmations = {};
+  }
 
   const { error } = await supabase.from('matches').update(mapped).eq('id', matchId);
   if (error) {
@@ -237,6 +245,18 @@ export const updateMatch = async (matchId, updatedFields) => {
     throw error;
   }
   return updatedFields;
+};
+
+export const toggleMatchConfirmation = async (matchId, userId) => {
+  const matches = await getMatches();
+  const match = matches.find(m => m.id === matchId);
+  if (match) {
+    const confirmations = match.confirmations ? { ...match.confirmations } : {};
+    confirmations[userId] = !confirmations[userId];
+    
+    return updateMatch(matchId, { confirmations });
+  }
+  return null;
 };
 
 // Chat Messages

@@ -1,6 +1,6 @@
 // src/components/FixtureView.jsx
 import React, { useState, useEffect } from 'react';
-import { getMatches, updateMatch, getObjections, getUsers, addMatchReview, updateUserEmail } from '../services/db';
+import { getMatches, updateMatch, getObjections, getUsers, addMatchReview, updateUserEmail, toggleMatchConfirmation } from '../services/db';
 
 const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigger }) => {
   const [matches, setMatches] = useState([]);
@@ -14,6 +14,9 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
   const [editingMatchId, setEditingMatchId] = useState(null);
   const [editDateTime, setEditDateTime] = useState('');
   const [editObjectionId, setEditObjectionId] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editHour, setEditHour] = useState(18);
+  const [editMinute, setEditMinute] = useState(0);
   
   const [markingMatchId, setMarkingMatchId] = useState(null);
   const [markStatus, setMarkStatus] = useState('Realizado');
@@ -130,9 +133,36 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
     }
   }, [currentUser]);
 
+  const formatSpanishDateTime = (dateStr, hour, minute) => {
+    if (!dateStr) return '';
+    try {
+      const dateObj = new Date(`${dateStr}T12:00:00`);
+      const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      
+      const dayName = weekdays[dateObj.getDay()];
+      const dayNum = dateObj.getDate();
+      const monthName = months[dateObj.getMonth()];
+      
+      const formattedHour = hour.toString().padStart(2, '0');
+      const formattedMinute = minute.toString().padStart(2, '0');
+      
+      return `${dayName} ${dayNum} de ${monthName} - ${formattedHour}:${formattedMinute} hs`;
+    } catch (e) {
+      return `${dateStr} ${hour}:${minute} hs`;
+    }
+  };
+
   const handleUpdateMatchInfo = async (matchId) => {
+    if (!editDate) {
+      alert('Por favor, selecciona una fecha.');
+      return;
+    }
+
+    const formattedDateTime = formatSpanishDateTime(editDate, editHour, editMinute);
+
     await updateMatch(matchId, {
-      dateTime: editDateTime,
+      dateTime: formattedDateTime,
       objectionId: editObjectionId,
       updatedBy: currentUser.name
     });
@@ -173,8 +203,15 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
 
   const startEditing = (match) => {
     setEditingMatchId(match.id);
-    setEditDateTime(match.dateTime);
     setEditObjectionId(match.objectionId);
+    
+    // Default edit date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setEditDate(tomorrow.toISOString().split('T')[0]);
+    setEditHour(18);
+    setEditMinute(0);
+    
     setMarkingMatchId(null); // Close status marker
   };
 
@@ -281,8 +318,15 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
           gap: '1.5rem'
         }}>
           {displayedMatches.map((match) => {
-            const isParticipant = match.user1Id === currentUser.id || match.user2Id === currentUser.id;
-            const canModify = currentUser.isAdmin || isParticipant;
+            const bothConfirmed = match.confirmations?.[match.user1Id] === true && match.confirmations?.[match.user2Id] === true;
+            const u1Confirmed = match.confirmations?.[match.user1Id] === true;
+            const u2Confirmed = match.confirmations?.[match.user2Id] === true;
+            const iAmConfirmed = match.confirmations?.[currentUser.id] === true;
+            const partnerId = match.user1Id === currentUser.id ? match.user2Id : match.user1Id;
+            const partnerName = getUserName(partnerId);
+            const partnerConfirmed = match.confirmations?.[partnerId] === true;
+
+            const canModify = currentUser.isAdmin || (isParticipant && !bothConfirmed);
             const currentObjection = objections.find(o => o.id === match.objectionId)?.label || 'Otro';
             
             // Highlight participant card
@@ -382,20 +426,140 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                   )}
                 </div>
 
+                {/* Mutual Confirmation Flow Widget */}
+                {match.status === 'Pendiente' && isParticipant && (
+                  <div style={{
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    background: bothConfirmed 
+                      ? 'rgba(34, 197, 94, 0.08)' 
+                      : 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid ' + (bothConfirmed ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255, 255, 255, 0.05)'),
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    fontSize: '0.8rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 600, color: bothConfirmed ? '#4ade80' : 'var(--text-secondary)' }}>
+                        {bothConfirmed ? '🤝 ¡Horario Pactado y Confirmado!' : '📅 Confirmación de Acuerdo:'}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {bothConfirmed ? '2/2 Listo' : `${(u1Confirmed?1:0)+(u2Confirmed?1:0)}/2 Aceptado`}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span>Tú:</span>
+                        <span style={{ color: iAmConfirmed ? '#4ade80' : 'var(--text-muted)', fontWeight: 'bold' }}>
+                          {iAmConfirmed ? '✓ Aceptado' : '⏳ Pendiente'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span>{partnerName.split(' ')[0]}:</span>
+                        <span style={{ color: partnerConfirmed ? '#4ade80' : 'var(--text-muted)', fontWeight: 'bold' }}>
+                          {partnerConfirmed ? '✓ Aceptado' : '⏳ Pendiente'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {!bothConfirmed ? (
+                      <button
+                        onClick={async () => {
+                          await toggleMatchConfirmation(match.id, currentUser.id);
+                          setMatchesTrigger(prev => prev + 1);
+                        }}
+                        className={iAmConfirmed ? 'btn-secondary' : 'btn-primary'}
+                        style={{
+                          width: '100%',
+                          padding: '0.4rem',
+                          fontSize: '0.75rem',
+                          borderRadius: '8px',
+                          marginTop: '0.25rem'
+                        }}
+                      >
+                        {iAmConfirmed ? '✕ Cancelar Mi Aceptación' : '👍 Aceptar y Confirmar Horario'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          await toggleMatchConfirmation(match.id, currentUser.id);
+                          setMatchesTrigger(prev => prev + 1);
+                        }}
+                        className="btn-secondary"
+                        style={{
+                          width: '100%',
+                          padding: '0.4rem',
+                          fontSize: '0.75rem',
+                          borderRadius: '8px',
+                          marginTop: '0.25rem'
+                        }}
+                      >
+                        🔓 Desbloquear Horario
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {/* Editor Forms */}
                 {editingMatchId === match.id && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>📅 Reprogramar Cruce</h4>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Día y Hora:</label>
-                      <input 
-                        type="text" 
-                        value={editDateTime} 
-                        onChange={(e) => setEditDateTime(e.target.value)} 
-                        placeholder="Ej. Miércoles 19:30 hs"
-                        style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
-                      />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Seleccionar Fecha:</label>
+                        <input 
+                          type="date" 
+                          value={editDate} 
+                          onChange={(e) => setEditDate(e.target.value)} 
+                          style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', width: '100%' }}
+                        />
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                          <span>Hora:</span>
+                          <strong style={{ color: 'var(--primary)' }}>{editHour.toString().padStart(2, '0')}:00 hs</strong>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="23" 
+                          value={editHour} 
+                          onChange={(e) => setEditHour(parseInt(e.target.value, 10))} 
+                          style={{ width: '100%', accentColor: 'var(--primary)' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                          <span>Minutos:</span>
+                          <strong style={{ color: 'var(--primary)' }}>{editMinute.toString().padStart(2, '0')} min</strong>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="45" 
+                          step="15"
+                          value={editMinute} 
+                          onChange={(e) => setEditMinute(parseInt(e.target.value, 10))} 
+                          style={{ width: '100%', accentColor: 'var(--primary)' }}
+                        />
+                      </div>
+
+                      <div style={{ 
+                        fontSize: '0.75rem', 
+                        background: 'rgba(255,255,255,0.03)', 
+                        padding: '0.5rem', 
+                        borderRadius: '8px', 
+                        border: '1px dashed rgba(255,255,255,0.08)',
+                        textAlign: 'center',
+                        marginTop: '0.25rem'
+                      }}>
+                        📅 Vista previa: <strong style={{ color: '#818cf8' }}>{formatSpanishDateTime(editDate, editHour, editMinute)}</strong>
+                      </div>
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>

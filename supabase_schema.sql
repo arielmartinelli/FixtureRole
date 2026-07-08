@@ -33,7 +33,7 @@ CREATE TABLE public.objections (
 
 ALTER TABLE public.objections ENABLE ROW LEVEL SECURITY;
 
--- 5. Create Matches Table
+-- 5. Create Matches Table (with confirmations JSONB for mutual schedule agreements)
 CREATE TABLE public.matches (
     id TEXT PRIMARY KEY, -- Custom generated ID
     week_id TEXT NOT NULL,
@@ -45,6 +45,7 @@ CREATE TABLE public.matches (
     fail_reason TEXT,
     updated_by TEXT,
     reviews JSONB DEFAULT '{}'::jsonb NOT NULL, -- Reviews map keyed by reviewer user ID
+    confirmations JSONB DEFAULT '{}'::jsonb NOT NULL, -- Agreement status map keyed by participant user ID
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
