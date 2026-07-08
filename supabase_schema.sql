@@ -1,10 +1,11 @@
--- Supabase Schema for Conquer Fixture Roleplay Hub (CLEAN RESET SCHEMA)
+-- Supabase Schema for Conquer Fixture Roleplay Hub (100% PRODUCTION RESET)
 
 -- 1. Drop existing tables to prevent schema conflict issues
 DROP TABLE IF EXISTS public.messages CASCADE;
 DROP TABLE IF EXISTS public.matches CASCADE;
 DROP TABLE IF EXISTS public.objections CASCADE;
 DROP TABLE IF EXISTS public.users CASCADE;
+DROP TABLE IF EXISTS public.settings CASCADE;
 
 -- 2. Enable UUID extension if not enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -61,7 +62,16 @@ CREATE TABLE public.messages (
 
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
--- 7. Insert Default Users (with name + "123" default passwords, and admin123 for administrator)
+-- 7. Create Settings Table (Group Target Goal, etc.)
+CREATE TABLE public.settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+-- 8. Insert Default Users (with name + "123" default passwords, and admin123 for administrator)
 INSERT INTO public.users (id, name, password, active, is_admin)
 VALUES 
     ('admin', 'Administrador', 'admin123', true, true),
@@ -78,7 +88,7 @@ VALUES
     ('cristian', 'Cristian', 'cristian123', true, false),
     ('agostina', 'Agostina', 'agostina123', true, false);
 
--- 8. Insert Default Objections
+-- 9. Insert Default Objections
 INSERT INTO public.objections (id, label)
 VALUES 
     ('dinero', 'Dinero'),
@@ -87,8 +97,12 @@ VALUES
     ('otras_opciones', 'Otras Opciones'),
     ('otro', 'Otro');
 
--- 9. Setup basic permissive public policies for testing (Supabase RLS Bypass Policies)
+-- 10. Insert Default Settings (Weekly Goal)
+INSERT INTO public.settings (key, value) VALUES ('weekly_goal', '2') ON CONFLICT (key) DO NOTHING;
+
+-- 11. Setup basic permissive public policies for testing (Supabase RLS Bypass Policies)
 CREATE POLICY "Permitir todo a usuarios anonimos en users" ON public.users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a usuarios anonimos en objections" ON public.objections FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a usuarios anonimos en matches" ON public.matches FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a usuarios anonimos en messages" ON public.messages FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir todo a usuarios anonimos en settings" ON public.settings FOR ALL USING (true) WITH CHECK (true);

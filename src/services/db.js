@@ -2,515 +2,356 @@
 import { supabase } from './supabaseClient';
 import { generateFixtures } from './fixtureEngine';
 
-const STORAGE_KEYS = {
-  USERS: 'conquer_users',
-  OBJECTIONS: 'conquer_objections',
-  MATCHES: 'conquer_matches',
-  MESSAGES: 'conquer_messages',
-};
-
-const DEFAULT_USERS = [
-  { id: 'admin', name: 'Administrador', password: 'admin123', active: true, isAdmin: true },
-  { id: 'jazmin_merlo', name: 'Jazmin Merlo', password: 'jazmin_merlo123', active: true, isAdmin: false },
-  { id: 'jazmin_mercado', name: 'Jazmin Mercado', password: 'jazmin_mercado123', active: true, isAdmin: false },
-  { id: 'fabrizio', name: 'Fabrizio', password: 'fabrizio123', active: true, isAdmin: false },
-  { id: 'ariel', name: 'Ariel', password: 'ariel123', active: true, isAdmin: false },
-  { id: 'cande', name: 'Cande', password: 'cande123', active: true, isAdmin: false },
-  { id: 'ariana', name: 'Ariana', password: 'ariana123', active: true, isAdmin: false },
-  { id: 'manuel', name: 'Manuel', password: 'manuel123', active: true, isAdmin: false },
-  { id: 'julieta', name: 'Julieta', password: 'julieta123', active: true, isAdmin: false },
-  { id: 'lucas', name: 'Lucas', password: 'lucas123', active: true, isAdmin: false },
-  { id: 'tomas', name: 'Tomas', password: 'tomas123', active: true, isAdmin: false },
-  { id: 'cristian', name: 'Cristian', password: 'cristian123', active: true, isAdmin: false },
-  { id: 'agostina', name: 'Agostina', password: 'agostina123', active: true, isAdmin: false },
-];
-
-const DEFAULT_OBJECTIONS = [
-  { id: 'dinero', label: 'Dinero' },
-  { id: 'pareja', label: 'Pareja' },
-  { id: 'pensarlo', label: 'Pensarlo' },
-  { id: 'otras_opciones', label: 'Otras Opciones' },
-  { id: 'otro', label: 'Otro' },
-];
-
-// Helper to check if Supabase has real config
-const isSupabaseActive = () => {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  return (
-    url &&
-    key &&
-    url !== 'https://your-supabase-project-url.supabase.co' &&
-    key !== 'your-actual-supabase-anonymous-anon-key' &&
-    !url.includes('placeholder')
-  );
-};
-
-// ----------------------------------------------------
-// LOCAL STORAGE SYNCHRONOUS FALLBACKS
-// ----------------------------------------------------
-const initializeLocalDB = () => {
-  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(DEFAULT_USERS));
-  } else {
-    // Migration: add password if missing
-    const currentUsers = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
-    let migrated = false;
-    const migratedUsers = currentUsers.map(u => {
-      if (!u.password) {
-        u.password = u.id === 'admin' ? 'admin123' : `${u.id}123`;
-        migrated = true;
-      }
-      return u;
-    });
-    if (migrated) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(migratedUsers));
-    }
-  }
-  
-  if (!localStorage.getItem(STORAGE_KEYS.OBJECTIONS)) {
-    localStorage.setItem(STORAGE_KEYS.OBJECTIONS, JSON.stringify(DEFAULT_OBJECTIONS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.MATCHES)) {
-    localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify([]));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.MESSAGES)) {
-    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify({}));
-  }
-};
-
 export const initializeDB = () => {
-  initializeLocalDB();
-};
-
-const getLocalUsers = () => {
-  initializeLocalDB();
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
-};
-
-const saveLocalUsers = (users) => {
-  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-};
-
-const getLocalObjections = () => {
-  initializeLocalDB();
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.OBJECTIONS)) || [];
-};
-
-const saveLocalObjections = (objs) => {
-  localStorage.setItem(STORAGE_KEYS.OBJECTIONS, JSON.stringify(objs));
-};
-
-const getLocalMatches = () => {
-  initializeLocalDB();
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.MATCHES)) || [];
-};
-
-const saveLocalMatches = (matches) => {
-  localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(matches));
-};
-
-const getLocalMessages = (matchId) => {
-  initializeLocalDB();
-  const allMessages = JSON.parse(localStorage.getItem(STORAGE_KEYS.MESSAGES)) || {};
-  return allMessages[matchId] || [];
-};
-
-const saveLocalMessages = (matchId, messages) => {
-  initializeLocalDB();
-  const allMessages = JSON.parse(localStorage.getItem(STORAGE_KEYS.MESSAGES)) || {};
-  allMessages[matchId] = messages;
-  localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(allMessages));
+  // No-op in 100% production Supabase mode
 };
 
 // ----------------------------------------------------
-// HYBRID ASYNCHRONOUS DB OPERATIONS
+// PRODUCTION 100% CLOUD SUPABASE OPERATIONS
 // ----------------------------------------------------
 
 // Users
 export const getUsers = async () => {
-  if (isSupabaseActive()) {
-    const { data, error } = await supabase.from('users').select('*').order('name', { ascending: true });
-    if (!error && data) {
-      return data.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        password: u.password,
-        active: u.active,
-        isAdmin: u.is_admin,
-      }));
-    }
-    console.error('Supabase getUsers error, falling back:', error);
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('name', { ascending: true });
+    
+  if (error) {
+    console.error('Supabase getUsers error:', error);
+    throw error;
   }
-  return getLocalUsers();
+  
+  return data.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    password: u.password,
+    active: u.active,
+    isAdmin: u.is_admin,
+  }));
 };
 
 export const addUser = async (name, isAdmin = false) => {
   const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
   const password = `${id}123`;
   
-  if (isSupabaseActive()) {
-    const { error } = await supabase.from('users').insert({
-      id,
-      name,
-      password,
-      is_admin: isAdmin,
-      active: true
-    });
-    if (error) console.error('Supabase addUser error:', error);
+  const { error } = await supabase.from('users').insert({
+    id,
+    name,
+    password,
+    is_admin: isAdmin,
+    active: true
+  });
+  
+  if (error) {
+    console.error('Supabase addUser error:', error);
+    throw error;
   }
   
-  const users = getLocalUsers();
-  if (users.find(u => u.id === id)) {
-    throw new Error('El usuario ya existe');
-  }
-  const newUser = { id, name, password, active: true, isAdmin };
-  users.push(newUser);
-  saveLocalUsers(users);
-  return newUser;
+  return { id, name, password, active: true, isAdmin };
 };
 
 export const deleteUser = async (userId) => {
-  if (isSupabaseActive()) {
-    const { error } = await supabase.from('users').delete().eq('id', userId);
-    if (error) console.error('Supabase deleteUser error:', error);
+  const { error } = await supabase.from('users').delete().eq('id', userId);
+  if (error) {
+    console.error('Supabase deleteUser error:', error);
+    throw error;
   }
-  let users = getLocalUsers();
-  users = users.filter(u => u.id !== userId);
-  saveLocalUsers(users);
 };
 
 export const toggleUserActive = async (userId) => {
-  const users = getLocalUsers();
-  const user = users.find(u => u.id === userId);
-  if (user) {
-    user.active = !user.active;
-    saveLocalUsers(users);
-
-    if (isSupabaseActive()) {
-      const { error } = await supabase.from('users').update({ active: user.active }).eq('id', userId);
-      if (error) console.error('Supabase toggleUserActive error:', error);
-    }
+  // Fetch current state
+  const { data, error: fetchError } = await supabase
+    .from('users')
+    .select('active')
+    .eq('id', userId)
+    .single();
+    
+  if (fetchError) throw fetchError;
+  
+  const newActive = !data.active;
+  const { error } = await supabase.from('users').update({ active: newActive }).eq('id', userId);
+  if (error) {
+    console.error('Supabase toggleUserActive error:', error);
+    throw error;
   }
 };
 
 export const updateUserEmail = async (userId, email) => {
-  const users = getLocalUsers();
-  const user = users.find(u => u.id === userId);
-  if (user) {
-    user.email = email.trim();
-    saveLocalUsers(users);
-
-    if (isSupabaseActive()) {
-      const { error } = await supabase.from('users').update({ email: email.trim() }).eq('id', userId);
-      if (error) console.error('Supabase updateUserEmail error:', error);
-    }
+  const { error } = await supabase.from('users').update({ email: email.trim() }).eq('id', userId);
+  if (error) {
+    console.error('Supabase updateUserEmail error:', error);
+    throw error;
   }
   return getUsers();
 };
 
 export const loginUser = async (usernameId, password) => {
-  const users = await getUsers();
-  const user = users.find(u => u.id === usernameId.toLowerCase().trim());
-  if (!user) {
-    throw new Error('El usuario no existe.');
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', usernameId.toLowerCase().trim())
+    .single();
+    
+  if (error || !data) {
+    throw new Error('El usuario no existe o las credenciales son incorrectas.');
   }
-  if (user.password !== password) {
+  if (data.password !== password) {
     throw new Error('Contraseña incorrecta.');
   }
-  if (!user.active) {
-    throw new Error('Tu cuenta está desactivada.');
+  if (!data.active) {
+    throw new Error('Tu cuenta está desactivada por el administrador.');
   }
-  return user;
+  
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    password: data.password,
+    active: data.active,
+    isAdmin: data.is_admin,
+  };
 };
 
 export const changePassword = async (userId, currentPassword, newPassword) => {
-  const users = await getUsers();
-  const user = users.find(u => u.id === userId);
-  if (!user) {
+  const { data, error: fetchError } = await supabase
+    .from('users')
+    .select('password')
+    .eq('id', userId)
+    .single();
+    
+  if (fetchError || !data) {
     throw new Error('Usuario no encontrado.');
   }
-  if (user.password !== currentPassword) {
+  if (data.password !== currentPassword) {
     throw new Error('La contraseña actual es incorrecta.');
   }
   
-  if (isSupabaseActive()) {
-    const { error } = await supabase.from('users').update({ password: newPassword.trim() }).eq('id', userId);
-    if (error) console.error('Supabase changePassword error:', error);
+  const { error } = await supabase
+    .from('users')
+    .update({ password: newPassword.trim() })
+    .eq('id', userId);
+    
+  if (error) {
+    console.error('Supabase changePassword error:', error);
+    throw error;
   }
-
-  // Update local
-  const localUsers = getLocalUsers();
-  const localU = localUsers.find(u => u.id === userId);
-  if (localU) {
-    localU.password = newPassword.trim();
-    saveLocalUsers(localUsers);
-  }
-  return user;
 };
 
 // Objections
 export const getObjections = async () => {
-  if (isSupabaseActive()) {
-    const { data, error } = await supabase.from('objections').select('*').order('label', { ascending: true });
-    if (!error && data) {
-      return data;
-    }
-    console.error('Supabase getObjections error, falling back:', error);
+  const { data, error } = await supabase
+    .from('objections')
+    .select('*')
+    .order('label', { ascending: true });
+    
+  if (error) {
+    console.error('Supabase getObjections error:', error);
+    throw error;
   }
-  return getLocalObjections();
+  return data;
 };
 
 export const addObjection = async (label) => {
   const id = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
   
-  if (isSupabaseActive()) {
-    const { error } = await supabase.from('objections').insert({ id, label });
-    if (error) console.error('Supabase addObjection error:', error);
+  const { error } = await supabase.from('objections').insert({ id, label });
+  if (error) {
+    console.error('Supabase addObjection error:', error);
+    throw error;
   }
-
-  const objs = getLocalObjections();
-  if (objs.find(o => o.id === id)) {
-    throw new Error('La objeción ya existe');
-  }
-  const newObj = { id, label };
-  objs.push(newObj);
-  saveLocalObjections(objs);
-  return newObj;
+  return { id, label };
 };
 
 export const deleteObjection = async (objId) => {
-  if (isSupabaseActive()) {
-    const { error } = await supabase.from('objections').delete().eq('id', objId);
-    if (error) console.error('Supabase deleteObjection error:', error);
+  const { error } = await supabase.from('objections').delete().eq('id', objId);
+  if (error) {
+    console.error('Supabase deleteObjection error:', error);
+    throw error;
   }
-  let objs = getLocalObjections();
-  objs = objs.filter(o => o.id !== objId);
-  saveLocalObjections(objs);
 };
 
 // Matches / Fixtures
 export const getMatches = async () => {
-  if (isSupabaseActive()) {
-    const { data, error } = await supabase.from('matches').select('*').order('created_at', { ascending: false });
-    if (!error && data) {
-      return data.map(m => ({
-        id: m.id,
-        weekId: m.week_id,
-        user1Id: m.user1_id,
-        user2Id: m.user2_id,
-        objectionId: m.objection_id,
-        dateTime: m.date_time,
-        status: m.status,
-        failReason: m.fail_reason,
-        updatedBy: m.updated_by,
-        reviews: m.reviews || {},
-      }));
-    }
-    console.error('Supabase getMatches error, falling back:', error);
+  const { data, error } = await supabase
+    .from('matches')
+    .select('*')
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error('Supabase getMatches error:', error);
+    throw error;
   }
-  return getLocalMatches();
+  
+  return data.map(m => ({
+    id: m.id,
+    weekId: m.week_id,
+    user1Id: m.user1_id,
+    user2Id: m.user2_id,
+    objectionId: m.objection_id,
+    dateTime: m.date_time,
+    status: m.status,
+    failReason: m.fail_reason,
+    updatedBy: m.updated_by,
+    reviews: m.reviews || {},
+  }));
 };
 
 export const saveMatches = async (newMatches) => {
-  if (isSupabaseActive()) {
-    const mapped = newMatches.map(m => ({
-      id: m.id,
-      week_id: m.weekId,
-      user1_id: m.user1Id,
-      user2_id: m.user2Id,
-      objection_id: m.objectionId,
-      date_time: m.dateTime,
-      status: m.status,
-      fail_reason: m.failReason,
-      updated_by: m.updatedBy,
-      reviews: m.reviews || {},
-    }));
-    const { error } = await supabase.from('matches').upsert(mapped);
-    if (error) console.error('Supabase saveMatches error:', error);
+  const mapped = newMatches.map(m => ({
+    id: m.id,
+    week_id: m.weekId,
+    user1_id: m.user1Id,
+    user2_id: m.user2Id,
+    objection_id: m.objectionId,
+    date_time: m.dateTime,
+    status: m.status,
+    fail_reason: m.failReason,
+    updated_by: m.updatedBy,
+    reviews: m.reviews || {},
+  }));
+  
+  const { error } = await supabase.from('matches').upsert(mapped);
+  if (error) {
+    console.error('Supabase saveMatches error:', error);
+    throw error;
   }
-  saveLocalMatches(newMatches);
 };
 
 export const updateMatch = async (matchId, updatedFields) => {
-  const matches = getLocalMatches();
-  const index = matches.findIndex(m => m.id === matchId);
-  if (index !== -1) {
-    const updatedLocal = { ...matches[index], ...updatedFields };
-    matches[index] = updatedLocal;
-    saveLocalMatches(matches);
+  const mapped = {};
+  if (updatedFields.weekId !== undefined) mapped.week_id = updatedFields.weekId;
+  if (updatedFields.user1Id !== undefined) mapped.user1_id = updatedFields.user1Id;
+  if (updatedFields.user2Id !== undefined) mapped.user2_id = updatedFields.user2Id;
+  if (updatedFields.objectionId !== undefined) mapped.objection_id = updatedFields.objectionId;
+  if (updatedFields.dateTime !== undefined) mapped.date_time = updatedFields.dateTime;
+  if (updatedFields.status !== undefined) mapped.status = updatedFields.status;
+  if (updatedFields.failReason !== undefined) mapped.fail_reason = updatedFields.failReason;
+  if (updatedFields.updatedBy !== undefined) mapped.updated_by = updatedFields.updatedBy;
+  if (updatedFields.reviews !== undefined) mapped.reviews = updatedFields.reviews;
 
-    if (isSupabaseActive()) {
-      const mapped = {};
-      if (updatedFields.weekId !== undefined) mapped.week_id = updatedFields.weekId;
-      if (updatedFields.user1Id !== undefined) mapped.user1_id = updatedFields.user1Id;
-      if (updatedFields.user2Id !== undefined) mapped.user2_id = updatedFields.user2Id;
-      if (updatedFields.objectionId !== undefined) mapped.objection_id = updatedFields.objectionId;
-      if (updatedFields.dateTime !== undefined) mapped.date_time = updatedFields.dateTime;
-      if (updatedFields.status !== undefined) mapped.status = updatedFields.status;
-      if (updatedFields.failReason !== undefined) mapped.fail_reason = updatedFields.failReason;
-      if (updatedFields.updatedBy !== undefined) mapped.updated_by = updatedFields.updatedBy;
-      if (updatedFields.reviews !== undefined) mapped.reviews = updatedFields.reviews;
-
-      const { error } = await supabase.from('matches').update(mapped).eq('id', matchId);
-      if (error) console.error('Supabase updateMatch error:', error);
-    }
-    return updatedLocal;
+  const { error } = await supabase.from('matches').update(mapped).eq('id', matchId);
+  if (error) {
+    console.error('Supabase updateMatch error:', error);
+    throw error;
   }
-  return null;
+  return updatedFields;
 };
 
 // Chat Messages
 export const getMessages = async (matchId) => {
-  if (isSupabaseActive()) {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('match_id', matchId)
-      .order('timestamp', { ascending: true });
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('match_id', matchId)
+    .order('timestamp', { ascending: true });
     
-    if (!error && data) {
-      return data.map(msg => ({
-        id: msg.id,
-        matchId: msg.match_id,
-        senderId: msg.sender_id,
-        text: msg.text,
-        timestamp: msg.timestamp,
-        readBy: msg.read_by || [],
-      }));
-    }
-    console.error('Supabase getMessages error, falling back:', error);
+  if (error) {
+    console.error('Supabase getMessages error:', error);
+    throw error;
   }
-  return getLocalMessages(matchId);
+  
+  return data.map(msg => ({
+    id: msg.id,
+    matchId: msg.match_id,
+    senderId: msg.sender_id,
+    text: msg.text,
+    timestamp: msg.timestamp,
+    readBy: msg.read_by || [],
+  }));
 };
 
 export const addMessage = async (matchId, senderId, text) => {
-  const timestamp = new Date().toISOString();
-  
-  if (isSupabaseActive()) {
-    const { error } = await supabase.from('messages').insert({
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
       match_id: matchId,
       sender_id: senderId,
       text,
       read_by: [senderId]
-    });
-    if (error) console.error('Supabase addMessage error:', error);
+    })
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Supabase addMessage error:', error);
+    throw error;
   }
-
-  // Local sync
-  const messages = getLocalMessages(matchId);
-  const newMessage = {
-    id: Math.random().toString(36).substring(2, 9),
-    matchId,
-    senderId,
-    text,
-    timestamp,
-    readBy: [senderId]
+  
+  return {
+    id: data.id,
+    matchId: data.match_id,
+    senderId: data.sender_id,
+    text: data.text,
+    timestamp: data.timestamp,
+    readBy: data.read_by || [],
   };
-  messages.push(newMessage);
-  saveLocalMessages(matchId, messages);
-  return newMessage;
 };
 
 export const markMessagesAsRead = async (matchId, userId) => {
-  // Local read indicator
-  const messages = getLocalMessages(matchId);
-  let changed = false;
-  const updatedMessages = messages.map(msg => {
-    if (!msg.readBy.includes(userId)) {
-      msg.readBy.push(userId);
-      changed = true;
-    }
-    return msg;
-  });
-  if (changed) {
-    saveLocalMessages(matchId, updatedMessages);
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('match_id', matchId);
+    
+  if (error) {
+    console.error('Supabase markMessagesAsRead select error:', error);
+    throw error;
   }
-
-  // Supabase read indicator
-  if (isSupabaseActive()) {
-    const { data, error } = await supabase.from('messages').select('*').eq('match_id', matchId);
-    if (!error && data) {
-      for (const msg of data) {
-        if (!msg.read_by.includes(userId)) {
-          const updated = [...msg.read_by, userId];
-          await supabase.from('messages').update({ read_by: updated }).eq('id', msg.id);
-        }
+  
+  if (data) {
+    for (const msg of data) {
+      if (!msg.read_by.includes(userId)) {
+        const updated = [...msg.read_by, userId];
+        const { error: updateErr } = await supabase
+          .from('messages')
+          .update({ read_by: updated })
+          .eq('id', msg.id);
+        if (updateErr) console.error('Supabase update read_by error:', updateErr);
       }
     }
   }
 };
 
 export const getUnreadNotifications = async (userId) => {
-  if (isSupabaseActive()) {
-    const { data, error } = await supabase.from('messages').select('*');
-    if (!error && data) {
-      const matches = await getMatches();
-      const myMatches = matches.filter(m => m.user1Id === userId || m.user2Id === userId);
-      const myMatchIds = myMatches.map(m => m.id);
-
-      const unreadMsgs = data.filter(msg => 
-        myMatchIds.includes(msg.match_id) && 
-        msg.sender_id !== userId && 
-        !msg.read_by.includes(userId)
-      );
-
-      const notificationsMap = {};
-      const users = await getUsers();
-      
-      unreadMsgs.forEach(msg => {
-        const match = myMatches.find(m => m.id === msg.match_id);
-        const partnerId = match.user1Id === userId ? match.user2Id : match.user1Id;
-        const partnerName = users.find(u => u.id === partnerId)?.name || partnerId;
-        
-        if (!notificationsMap[msg.match_id]) {
-          notificationsMap[msg.match_id] = {
-            matchId: msg.match_id,
-            senderName: partnerName,
-            text: msg.text,
-            timestamp: msg.timestamp,
-            unreadCount: 0
-          };
-        }
-        notificationsMap[msg.match_id].unreadCount += 1;
-        if (new Date(msg.timestamp) > new Date(notificationsMap[msg.match_id].timestamp)) {
-          notificationsMap[msg.match_id].text = msg.text;
-          notificationsMap[msg.match_id].timestamp = msg.timestamp;
-        }
-      });
-
-      return Object.values(notificationsMap);
-    }
+  const { data, error } = await supabase.from('messages').select('*');
+  if (error) {
+    console.error('Supabase getUnreadNotifications error:', error);
+    throw error;
   }
-
-  // Local Storage Notifications
-  const matches = getLocalMatches();
+  
+  const matches = await getMatches();
   const myMatches = matches.filter(m => m.user1Id === userId || m.user2Id === userId);
   const myMatchIds = myMatches.map(m => m.id);
-  
+
+  const unreadMsgs = data.filter(msg => 
+    myMatchIds.includes(msg.match_id) && 
+    msg.sender_id !== userId && 
+    !msg.read_by.includes(userId)
+  );
+
   const notificationsMap = {};
-  const users = getLocalUsers();
-
-  myMatchIds.forEach(mId => {
-    const messages = getLocalMessages(mId);
-    const unread = messages.filter(msg => msg.senderId !== userId && !msg.readBy.includes(userId));
+  const users = await getUsers();
+  
+  unreadMsgs.forEach(msg => {
+    const match = myMatches.find(m => m.id === msg.match_id);
+    const partnerId = match.user1Id === userId ? match.user2Id : match.user1Id;
+    const partnerName = users.find(u => u.id === partnerId)?.name || partnerId;
     
-    if (unread.length > 0) {
-      // Sort by newest
-      unread.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      
-      const matchObj = myMatches.find(m => m.id === mId);
-      const partnerId = matchObj.user1Id === userId ? matchObj.user2Id : matchObj.user1Id;
-      const partnerName = users.find(u => u.id === partnerId)?.name || partnerId;
-
-      notificationsMap[mId] = {
-        matchId: mId,
+    if (!notificationsMap[msg.match_id]) {
+      notificationsMap[msg.match_id] = {
+        matchId: msg.match_id,
         senderName: partnerName,
-        text: unread[0].text,
-        timestamp: unread[0].timestamp,
-        unreadCount: unread.length
+        text: msg.text,
+        timestamp: msg.timestamp,
+        unreadCount: 0
       };
+    }
+    notificationsMap[msg.match_id].unreadCount += 1;
+    if (new Date(msg.timestamp) > new Date(notificationsMap[msg.match_id].timestamp)) {
+      notificationsMap[msg.match_id].text = msg.text;
+      notificationsMap[msg.match_id].timestamp = msg.timestamp;
     }
   });
 
@@ -665,12 +506,25 @@ export const getDashboardStats = async (selectedWeekId = '') => {
 };
 
 export const getWeeklyGoal = async () => {
-  const goal = localStorage.getItem('conquer_weekly_goal');
-  return goal ? parseInt(goal, 10) : 2;
+  const { data, error } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('key', 'weekly_goal')
+    .single();
+    
+  if (error || !data) return 2;
+  return parseInt(data.value, 10);
 };
 
 export const saveWeeklyGoal = async (goal) => {
-  localStorage.setItem('conquer_weekly_goal', goal.toString());
+  const { error } = await supabase
+    .from('settings')
+    .upsert({ key: 'weekly_goal', value: goal.toString() });
+    
+  if (error) {
+    console.error('Supabase saveWeeklyGoal error:', error);
+    throw error;
+  }
 };
 
 export const generateWeeklyMatches = async (weekId) => {
