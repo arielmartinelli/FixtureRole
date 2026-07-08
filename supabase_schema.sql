@@ -1,10 +1,16 @@
--- Supabase Schema for Conquer Fixture Roleplay Hub
+-- Supabase Schema for Conquer Fixture Roleplay Hub (CLEAN RESET SCHEMA)
 
--- 1. Enable UUID extension if not enabled
+-- 1. Drop existing tables to prevent schema conflict issues
+DROP TABLE IF EXISTS public.messages CASCADE;
+DROP TABLE IF EXISTS public.matches CASCADE;
+DROP TABLE IF EXISTS public.objections CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
+
+-- 2. Enable UUID extension if not enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Create Users Table (with Password column for Authentication)
-CREATE TABLE IF NOT EXISTS public.users (
+-- 3. Create Users Table (with Password column for Authentication)
+CREATE TABLE public.users (
     id TEXT PRIMARY KEY, -- Lowercase normalized name ID
     name TEXT NOT NULL,
     email TEXT,
@@ -14,11 +20,11 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Enable RLS (Row Level Security) - optional, disabled by default for ease of testing
+-- Enable RLS (Row Level Security)
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- 3. Create Objections Table
-CREATE TABLE IF NOT EXISTS public.objections (
+-- 4. Create Objections Table
+CREATE TABLE public.objections (
     id TEXT PRIMARY KEY, -- Lowercase normalized label ID
     label TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -26,8 +32,8 @@ CREATE TABLE IF NOT EXISTS public.objections (
 
 ALTER TABLE public.objections ENABLE ROW LEVEL SECURITY;
 
--- 4. Create Matches Table
-CREATE TABLE IF NOT EXISTS public.matches (
+-- 5. Create Matches Table
+CREATE TABLE public.matches (
     id TEXT PRIMARY KEY, -- Custom generated ID
     week_id TEXT NOT NULL,
     user1_id TEXT REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
@@ -43,8 +49,8 @@ CREATE TABLE IF NOT EXISTS public.matches (
 
 ALTER TABLE public.matches ENABLE ROW LEVEL SECURITY;
 
--- 5. Create Messages Table
-CREATE TABLE IF NOT EXISTS public.messages (
+-- 6. Create Messages Table (Internal Chat)
+CREATE TABLE public.messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     match_id TEXT REFERENCES public.matches(id) ON DELETE CASCADE NOT NULL,
     sender_id TEXT REFERENCES public.users(id) ON DELETE SET NULL,
@@ -55,7 +61,7 @@ CREATE TABLE IF NOT EXISTS public.messages (
 
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
--- 6. Insert Default Users (with name + "123" default passwords, and admin123 for administrator)
+-- 7. Insert Default Users (with name + "123" default passwords, and admin123 for administrator)
 INSERT INTO public.users (id, name, password, active, is_admin)
 VALUES 
     ('admin', 'Administrador', 'admin123', true, true),
@@ -70,22 +76,18 @@ VALUES
     ('lucas', 'Lucas', 'lucas123', true, false),
     ('tomas', 'Tomas', 'tomas123', true, false),
     ('cristian', 'Cristian', 'cristian123', true, false),
-    ('agostina', 'Agostina', 'agostina123', true, false)
-ON CONFLICT (id) DO UPDATE 
-SET name = EXCLUDED.name, password = EXCLUDED.password, is_admin = EXCLUDED.is_admin;
+    ('agostina', 'Agostina', 'agostina123', true, false);
 
--- 7. Insert Default Objections
+-- 8. Insert Default Objections
 INSERT INTO public.objections (id, label)
 VALUES 
     ('dinero', 'Dinero'),
     ('pareja', 'Pareja'),
     ('pensarlo', 'Pensarlo'),
     ('otras_opciones', 'Otras Opciones'),
-    ('otro', 'Otro')
-ON CONFLICT (id) DO UPDATE 
-SET label = EXCLUDED.label;
+    ('otro', 'Otro');
 
--- 8. Setup basic permissive public policies for testing (Supabase RLS Bypass Policies)
+-- 9. Setup basic permissive public policies for testing (Supabase RLS Bypass Policies)
 CREATE POLICY "Permitir todo a usuarios anonimos en users" ON public.users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a usuarios anonimos en objections" ON public.objections FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a usuarios anonimos en matches" ON public.matches FOR ALL USING (true) WITH CHECK (true);
