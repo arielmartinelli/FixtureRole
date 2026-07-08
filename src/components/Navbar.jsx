@@ -11,8 +11,8 @@ const Navbar = ({ currentUser, activeTab, setActiveTab, onNotificationClick, mat
   useEffect(() => {
     if (!currentUser) return;
     
-    const checkNotifications = () => {
-      const unread = getUnreadNotifications(currentUser.id);
+    const checkNotifications = async () => {
+      const unread = await getUnreadNotifications(currentUser.id);
       setNotifications(unread);
     };
 
@@ -34,8 +34,8 @@ const Navbar = ({ currentUser, activeTab, setActiveTab, onNotificationClick, mat
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  const handleNotificationItemClick = (notif) => {
-    markMessagesAsRead(notif.matchId, currentUser.id);
+  const handleNotificationItemClick = async (notif) => {
+    await markMessagesAsRead(notif.matchId, currentUser.id);
     setShowNotifications(false);
     
     // Call parent to switch tabs and open chat drawer

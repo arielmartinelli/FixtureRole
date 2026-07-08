@@ -36,17 +36,20 @@ function App() {
 
   // Initialize DB and load active session on mount
   useEffect(() => {
-    initializeDB();
-    const sessionId = localStorage.getItem('conquer_session_user_id');
-    if (sessionId) {
-      const loadedUsers = getUsers();
-      const user = loadedUsers.find(u => u.id === sessionId);
-      if (user && user.active) {
-        setCurrentUser(user);
-      } else {
-        localStorage.removeItem('conquer_session_user_id');
+    const load = async () => {
+      initializeDB();
+      const sessionId = localStorage.getItem('conquer_session_user_id');
+      if (sessionId) {
+        const loadedUsers = await getUsers();
+        const user = loadedUsers.find(u => u.id === sessionId);
+        if (user && user.active) {
+          setCurrentUser(user);
+        } else {
+          localStorage.removeItem('conquer_session_user_id');
+        }
       }
-    }
+    };
+    load();
   }, []);
 
   const handleLoginSuccess = (user) => {
@@ -73,10 +76,7 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // Get current active chat match info if drawer is open
-  const activeChatMatch = activeChatMatchId 
-    ? getMatches().find(m => m.id === activeChatMatchId)
-    : null;
+
 
   return (
     <div className="app-container">
@@ -121,7 +121,6 @@ function App() {
       {activeChatMatchId && (
         <ChatDrawer 
           matchId={activeChatMatchId}
-          match={activeChatMatch}
           currentUser={currentUser}
           onClose={() => setActiveChatMatchId(null)}
         />

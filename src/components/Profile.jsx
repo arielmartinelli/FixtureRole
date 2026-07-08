@@ -13,12 +13,12 @@ const Profile = ({ currentUser, onLogout, setMatchesTrigger }) => {
   const [pwError, setPwError] = useState('');
   const [pwSuccess, setPwSuccess] = useState('');
 
-  const handleUpdateEmail = (e) => {
+  const handleUpdateEmail = async (e) => {
     e.preventDefault();
     setEmailMsg('');
 
     try {
-      updateUserEmail(currentUser.id, emailInput.trim());
+      await updateUserEmail(currentUser.id, emailInput.trim());
       currentUser.email = emailInput.trim(); // Sync locally
       setEmailMsg('Correo corporativo actualizado.');
       setMatchesTrigger(prev => prev + 1);
@@ -28,7 +28,7 @@ const Profile = ({ currentUser, onLogout, setMatchesTrigger }) => {
     }
   };
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     setPwError('');
     setPwSuccess('');
@@ -49,7 +49,7 @@ const Profile = ({ currentUser, onLogout, setMatchesTrigger }) => {
     }
 
     try {
-      changePassword(currentUser.id, currentPassword, newPassword);
+      await changePassword(currentUser.id, currentPassword, newPassword);
       setPwSuccess('¡Contraseña cambiada con éxito!');
       setCurrentPassword('');
       setNewPassword('');

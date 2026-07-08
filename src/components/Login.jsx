@@ -9,15 +9,18 @@ const Login = ({ onLoginSuccess }) => {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    // Load all users (both admin and team members)
-    const loadedUsers = getUsers().filter(u => u.active);
-    setUsers(loadedUsers);
-    if (loadedUsers.length > 0) {
-      setSelectedUserId(loadedUsers[0].id);
-    }
+    const load = async () => {
+      const allUsers = await getUsers();
+      const loadedUsers = allUsers.filter(u => u.active);
+      setUsers(loadedUsers);
+      if (loadedUsers.length > 0) {
+        setSelectedUserId(loadedUsers[0].id);
+      }
+    };
+    load();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -27,7 +30,7 @@ const Login = ({ onLoginSuccess }) => {
     }
 
     try {
-      const user = loginUser(selectedUserId, password);
+      const user = await loginUser(selectedUserId, password);
       onLoginSuccess(user);
     } catch (err) {
       setErrorMsg(err.message || 'Error al iniciar sesión.');

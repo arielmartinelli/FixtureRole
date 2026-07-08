@@ -30,10 +30,10 @@ const AdminPanel = ({ setMatchesTrigger }) => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const allUsers = getUsers();
-    const allObjections = getObjections();
-    const allMatches = getMatches();
+  const loadData = async () => {
+    const allUsers = await getUsers();
+    const allObjections = await getObjections();
+    const allMatches = await getMatches();
     
     setUsers(allUsers);
     setObjections(allObjections);
@@ -43,48 +43,50 @@ const AdminPanel = ({ setMatchesTrigger }) => {
     const weeks = [...new Set(allMatches.map(m => m.weekId))];
     const nextWeekNumber = weeks.length + 1;
     setWeekInput(`Semana ${nextWeekNumber}`);
-    setWeeklyGoal(getWeeklyGoal());
+    
+    const goal = await getWeeklyGoal();
+    setWeeklyGoal(goal);
   };
 
-  const handleAddMember = (e) => {
+  const handleAddMember = async (e) => {
     e.preventDefault();
     if (!newMemberName.trim()) return;
 
     try {
-      addUser(newMemberName.trim(), false);
+      await addUser(newMemberName.trim(), false);
       setNewMemberName('');
-      loadData();
+      await loadData();
     } catch (err) {
       alert(err.message);
     }
   };
 
-  const handleToggleActive = (userId) => {
-    toggleUserActive(userId);
-    loadData();
+  const handleToggleActive = async (userId) => {
+    await toggleUserActive(userId);
+    await loadData();
   };
 
-  const handleAddObjection = (e) => {
+  const handleAddObjection = async (e) => {
     e.preventDefault();
     if (!newObjectionLabel.trim()) return;
 
     try {
-      addObjection(newObjectionLabel.trim());
+      await addObjection(newObjectionLabel.trim());
       setNewObjectionLabel('');
-      loadData();
+      await loadData();
     } catch (err) {
       alert(err.message);
     }
   };
 
-  const handleDeleteObjection = (id) => {
+  const handleDeleteObjection = async (id) => {
     if (confirm('¿Estás seguro de eliminar esta objeción? Los cruces existentes que la contengan mantendrán su nombre, pero ya no estará disponible para nuevos cruces.')) {
-      deleteObjection(id);
-      loadData();
+      await deleteObjection(id);
+      await loadData();
     }
   };
 
-  const handleGenerateMatches = () => {
+  const handleGenerateMatches = async () => {
     if (!weekInput.trim()) {
       setGenerationMsg({ text: 'Por favor, introduce un nombre para la semana/id.', type: 'danger' });
       return;
@@ -104,14 +106,14 @@ const AdminPanel = ({ setMatchesTrigger }) => {
         if (!confirmOverwrite) return;
       }
 
-      generateWeeklyMatches(weekInput.trim());
+      await generateWeeklyMatches(weekInput.trim());
       setGenerationMsg({ 
         text: `¡Cruces generados con éxito para la "${weekInput.trim()}"! Se crearon ${activeUsers.length} cruces (2 por persona).`, 
         type: 'success' 
       });
       
       setMatchesTrigger(prev => prev + 1);
-      loadData();
+      await loadData();
       
       // Clear msg after 5s
       setTimeout(() => setGenerationMsg({ text: '', type: '' }), 5000);
@@ -166,10 +168,10 @@ const AdminPanel = ({ setMatchesTrigger }) => {
                 min="1"
                 max="10"
                 value={weeklyGoal} 
-                onChange={(e) => {
+                onChange={async (e) => {
                   const val = parseInt(e.target.value, 10) || 1;
                   setWeeklyGoal(val);
-                  saveWeeklyGoal(val);
+                  await saveWeeklyGoal(val);
                   setMatchesTrigger(prev => prev + 1);
                 }} 
                 style={{ width: '100%' }}

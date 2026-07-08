@@ -1,26 +1,31 @@
 // src/components/ChatDrawer.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { getMessages, addMessage, getUsers, markMessagesAsRead } from '../services/db';
+import { getMessages, addMessage, getUsers, markMessagesAsRead, getMatches } from '../services/db';
 
-const ChatDrawer = ({ matchId, match, currentUser, onClose }) => {
+const ChatDrawer = ({ matchId, currentUser, onClose }) => {
+  const [match, setMatch] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [users, setUsers] = useState([]);
   const messagesEndRef = useRef(null);
 
-  // Load users once
+  // Load users and match details once
   useEffect(() => {
-    setUsers(getUsers());
-  }, []);
+    getUsers().then(allUsers => setUsers(allUsers));
+    getMatches().then(allMatches => {
+      const foundMatch = allMatches.find(m => m.id === matchId);
+      setMatch(foundMatch);
+    });
+  }, [matchId]);
 
-  // Poll for messages in localStorage so that changing the current user simulates a real chat response instantly
+  // Poll for messages in database
   useEffect(() => {
     if (!matchId) return;
 
-    const fetchMessages = () => {
-      const msgs = getMessages(matchId);
+    const fetchMessages = async () => {
+      const msgs = await getMessages(matchId);
       setMessages(msgs);
-      markMessagesAsRead(matchId, currentUser.id);
+      await markMessagesAsRead(matchId, currentUser.id);
     };
 
     fetchMessages();
@@ -39,13 +44,15 @@ const ChatDrawer = ({ matchId, match, currentUser, onClose }) => {
   const otherUserId = match.user1Id === currentUser.id ? match.user2Id : match.user1Id;
   const otherUserName = users.find(u => u.id === otherUserId)?.name || 'Compañero';
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    addMessage(matchId, currentUser.id, inputText.trim());
+    const textToSend = inputText.trim();
     setInputText('');
-    setMessages(getMessages(matchId));
+    await addMessage(matchId, currentUser.id, textToSend);
+    const msgs = await getMessages(matchId);
+    setMessages(msgs);
   };
 
   const formatTime = (isoString) => {

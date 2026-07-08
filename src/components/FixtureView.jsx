@@ -29,33 +29,36 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
 
   // Load data
   useEffect(() => {
-    const allMatches = getMatches();
-    const allObjections = getObjections();
-    const allUsers = getUsers();
-    
-    setObjections(allObjections);
-    setUsers(allUsers);
-    
-    // Extract unique weeks
-    const uniqueWeeks = [...new Set(allMatches.map(m => m.weekId))].sort((a, b) => b.localeCompare(a));
-    setWeeks(uniqueWeeks);
+    const load = async () => {
+      const allMatches = await getMatches();
+      const allObjections = await getObjections();
+      const allUsers = await getUsers();
+      
+      setObjections(allObjections);
+      setUsers(allUsers);
+      
+      // Extract unique weeks
+      const uniqueWeeks = [...new Set(allMatches.map(m => m.weekId))].sort((a, b) => b.localeCompare(a));
+      setWeeks(uniqueWeeks);
 
-    // Default to the most recent week if not set
-    if (!selectedWeek && uniqueWeeks.length > 0) {
-      setSelectedWeek(uniqueWeeks[0]);
-    }
+      // Default to the most recent week if not set
+      if (!selectedWeek && uniqueWeeks.length > 0) {
+        setSelectedWeek(uniqueWeeks[0]);
+      }
 
-    // Filter matches
-    let filtered = allMatches;
-    if (selectedWeek) {
-      filtered = filtered.filter(m => m.weekId === selectedWeek);
-    } else if (uniqueWeeks.length > 0) {
-      filtered = filtered.filter(m => m.weekId === uniqueWeeks[0]);
-    } else {
-      filtered = [];
-    }
+      // Filter matches
+      let filtered = allMatches;
+      if (selectedWeek) {
+        filtered = filtered.filter(m => m.weekId === selectedWeek);
+      } else if (uniqueWeeks.length > 0) {
+        filtered = filtered.filter(m => m.weekId === uniqueWeeks[0]);
+      } else {
+        filtered = [];
+      }
 
-    setMatches(filtered);
+      setMatches(filtered);
+    };
+    load();
   }, [selectedWeek, matchesTrigger]);
 
   // Handle switching tabs for normal users
@@ -67,8 +70,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
     }
   }, [currentUser]);
 
-  const handleUpdateMatchInfo = (matchId) => {
-    updateMatch(matchId, {
+  const handleUpdateMatchInfo = async (matchId) => {
+    await updateMatch(matchId, {
       dateTime: editDateTime,
       objectionId: editObjectionId,
       updatedBy: currentUser.name
@@ -77,7 +80,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
     setMatchesTrigger(prev => prev + 1);
   };
 
-  const handleMarkStatus = (matchId) => {
+  const handleMarkStatus = async (matchId) => {
     if (markStatus === 'No Realizado' && !failReason.trim()) {
       alert('Por favor, indica la razón de la inasistencia.');
       return;
@@ -87,11 +90,11 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
       const matchObj = matches.find(m => m.id === matchId);
       const isParticipant = matchObj?.user1Id === currentUser.id || matchObj?.user2Id === currentUser.id;
       if (isParticipant && feedbackComment.trim()) {
-        addMatchReview(matchId, currentUser.id, rating, feedbackComment);
+        await addMatchReview(matchId, currentUser.id, rating, feedbackComment);
       }
     }
 
-    updateMatch(matchId, {
+    await updateMatch(matchId, {
       status: markStatus,
       failReason: markStatus === 'No Realizado' ? failReason : '',
       updatedBy: currentUser.name
@@ -496,9 +499,9 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                             style={{ flex: 1, padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
                           />
                           <button 
-                            onClick={() => {
+                            onClick={async () => {
                               if (emailInput.trim()) {
-                                updateUserEmail(currentUser.id, emailInput.trim());
+                                await updateUserEmail(currentUser.id, emailInput.trim());
                                 currentUser.email = emailInput.trim();
                                 setMatchesTrigger(prev => prev + 1);
                               }
@@ -517,8 +520,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                             Correo: <strong>{currentUser.email}</strong>
                           </span>
                           <button 
-                            onClick={() => {
-                              updateUserEmail(currentUser.id, '');
+                            onClick={async () => {
+                              await updateUserEmail(currentUser.id, '');
                               currentUser.email = '';
                               setEmailInput('');
                               setMatchesTrigger(prev => prev + 1);

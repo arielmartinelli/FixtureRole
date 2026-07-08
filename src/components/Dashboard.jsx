@@ -9,9 +9,13 @@ const Dashboard = ({ matchesTrigger }) => {
   const [weeklyGoal, setWeeklyGoal] = useState(2);
 
   useEffect(() => {
-    const data = getDashboardStats(selectedWeek);
-    setStats(data);
-    setWeeklyGoal(getWeeklyGoal());
+    const load = async () => {
+      const data = await getDashboardStats(selectedWeek);
+      setStats(data);
+      const goal = await getWeeklyGoal();
+      setWeeklyGoal(goal);
+    };
+    load();
   }, [selectedWeek, matchesTrigger]);
 
   if (!stats) return <div style={{ color: 'var(--text-secondary)' }}>Cargando estadísticas...</div>;
