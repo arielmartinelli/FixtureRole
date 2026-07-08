@@ -27,6 +27,66 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
   const [schedulingMatchId, setSchedulingMatchId] = useState(null);
   const [emailInput, setEmailInput] = useState('');
 
+  // Helper to parse localized datetime string and return ISO strings with 30m duration
+  const getParsedDates = (dateTimeStr) => {
+    const now = new Date();
+    let start = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    start.setHours(18, 0, 0, 0);
+
+    try {
+      const lowerStr = dateTimeStr.toLowerCase();
+      const daysMap = {
+        'lunes': 1,
+        'martes': 2,
+        'miércoles': 3,
+        'miercoles': 3,
+        'jueves': 4,
+        'viernes': 5,
+        'sábado': 6,
+        'sabado': 6,
+        'domingo': 0
+      };
+
+      let dayOfWeek = -1;
+      for (const [dayName, dayNum] of Object.entries(daysMap)) {
+        if (lowerStr.includes(dayName)) {
+          dayOfWeek = dayNum;
+          break;
+        }
+      }
+
+      const timeMatch = dateTimeStr.match(/(\d{1,2}):(\d{2})/);
+      let hours = 18;
+      let minutes = 0;
+      if (timeMatch) {
+        hours = parseInt(timeMatch[1], 10);
+        minutes = parseInt(timeMatch[2], 10);
+      }
+
+      if (dayOfWeek !== -1) {
+        const currentDay = now.getDay();
+        const distance = (dayOfWeek + 7 - currentDay) % 7;
+        start = new Date(now.getTime() + distance * 24 * 60 * 60 * 1000);
+        start.setHours(hours, minutes, 0, 0);
+      } else {
+        start.setHours(hours, minutes, 0, 0);
+      }
+    } catch (e) {
+      console.error("Error parsing date time:", e);
+    }
+
+    const end = new Date(start.getTime() + 30 * 60 * 1000); // 30 minutes duration
+
+    const formatISO = (date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    return {
+      startStr: formatISO(start),
+      endStr: formatISO(end)
+    };
+  };
+
   // Load data
   useEffect(() => {
     const load = async () => {
@@ -481,14 +541,14 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                 {schedulingMatchId === match.id && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(99, 102, 241, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(99, 102, 241, 0.15)', fontSize: '0.8rem' }}>
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>📅 Agendar Tarea en Calendario</span>
+                      <span>📅 Agendar Evento (30m - Disponible)</span>
                       <button onClick={() => setSchedulingMatchId(null)} style={{ background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: 0 }}>✕</button>
                     </h4>
                     
                     {!currentUser.email ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          Ingresa tu correo de la empresa para agendar tareas en Google Calendar:
+                          Ingresa tu correo de la empresa para agendar eventos en Google Calendar:
                         </p>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <input 
@@ -534,7 +594,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
 
                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                           <a 
-                            href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Tarea: Roleplay con ${getUserName(match.user1Id === currentUser.id ? match.user2Id : match.user1Id)}`)}&details=${encodeURIComponent(`Entrenar la objeción: ${currentObjection}. Coordinar por el chat de Conquer.`)}&add=${encodeURIComponent(currentUser.email)}`}
+                            href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Roleplay con ${getUserName(match.user1Id === currentUser.id ? match.user2Id : match.user1Id)}`)}&dates=${getParsedDates(match.dateTime).startStr}/${getParsedDates(match.dateTime).endStr}&details=${encodeURIComponent(`Entrenar la objeción: ${currentObjection}. Coordinar por el chat de Conquer.`)}&add=${encodeURIComponent(currentUser.email)}&sf=true`}
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="btn-primary" 
@@ -556,21 +616,24 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                           <button 
                             onClick={() => {
                               const partnerName = getUserName(match.user1Id === currentUser.id ? match.user2Id : match.user1Id);
-                              const summary = `Tarea: Roleplay con ${partnerName}`;
+                              const summary = `Roleplay con ${partnerName}`;
                               const description = `Entrenar objeción: ${currentObjection}. Coordinar por el chat de Conquer.`;
                               const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                              const dates = getParsedDates(match.dateTime);
                               
                               const icsContent = [
                                 'BEGIN:VCALENDAR',
                                 'VERSION:2.0',
                                 'PRODID:-//Conquer//Fixture App//ES',
-                                'BEGIN:VTODO',
-                                `UID:${match.id}_task@conquer.fixture`,
+                                'BEGIN:VEVENT',
+                                `UID:${match.id}_event@conquer.fixture`,
                                 `DTSTAMP:${dtstamp}`,
+                                `DTSTART:${dates.startStr}`,
+                                `DTEND:${dates.endStr}`,
                                 `SUMMARY:${summary}`,
                                 `DESCRIPTION:${description}`,
-                                'STATUS:NEEDS-ACTION',
-                                'END:VTODO',
+                                'TRANSP:TRANSPARENT', // Mark event as free/available
+                                'END:VEVENT',
                                 'END:VCALENDAR'
                               ].join('\r\n');
 
@@ -578,7 +641,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                               const url = URL.createObjectURL(blob);
                               const link = document.createElement('a');
                               link.href = url;
-                              link.setAttribute('download', `Tarea_Roleplay_${partnerName.replace(/\s+/g, '_')}.ics`);
+                              link.setAttribute('download', `Roleplay_${partnerName.replace(/\s+/g, '_')}.ics`);
                               document.body.appendChild(link);
                               link.click();
                               document.body.removeChild(link);
@@ -586,7 +649,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                             className="btn-secondary" 
                             style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem', borderRadius: '8px' }}
                           >
-                            Reminders / Outlook (.ics)
+                            Apple / Outlook (.ics)
                           </button>
                         </div>
                       </div>
