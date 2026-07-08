@@ -100,7 +100,14 @@ VALUES
 -- 10. Insert Default Settings (Weekly Goal)
 INSERT INTO public.settings (key, value) VALUES ('weekly_goal', '2') ON CONFLICT (key) DO NOTHING;
 
--- 11. Setup basic permissive public policies for testing (Supabase RLS Bypass Policies)
+-- 11. Drop policies if they already exist (prevents PostgreSQL policy conflicts)
+DROP POLICY IF EXISTS "Permitir todo a usuarios anonimos en users" ON public.users;
+DROP POLICY IF EXISTS "Permitir todo a usuarios anonimos en objections" ON public.objections;
+DROP POLICY IF EXISTS "Permitir todo a usuarios anonimos en matches" ON public.matches;
+DROP POLICY IF EXISTS "Permitir todo a usuarios anonimos en messages" ON public.messages;
+DROP POLICY IF EXISTS "Permitir todo a usuarios anonimos en settings" ON public.settings;
+
+-- 12. Setup basic permissive public policies for testing (Supabase RLS Bypass Policies)
 CREATE POLICY "Permitir todo a usuarios anonimos en users" ON public.users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a usuarios anonimos en objections" ON public.objections FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a usuarios anonimos en matches" ON public.matches FOR ALL USING (true) WITH CHECK (true);
