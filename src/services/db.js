@@ -9,19 +9,19 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_USERS = [
-  { id: 'admin', name: 'Administrador', active: true, isAdmin: true },
-  { id: 'jazmin_merlo', name: 'Jazmin Merlo', active: true, isAdmin: false },
-  { id: 'jazmin_mercado', name: 'Jazmin Mercado', active: true, isAdmin: false },
-  { id: 'fabrizio', name: 'Fabrizio', active: true, isAdmin: false },
-  { id: 'ariel', name: 'Ariel', active: true, isAdmin: false },
-  { id: 'cande', name: 'Cande', active: true, isAdmin: false },
-  { id: 'ariana', name: 'Ariana', active: true, isAdmin: false },
-  { id: 'manuel', name: 'Manuel', active: true, isAdmin: false },
-  { id: 'julieta', name: 'Julieta', active: true, isAdmin: false },
-  { id: 'lucas', name: 'Lucas', active: true, isAdmin: false },
-  { id: 'tomas', name: 'Tomas', active: true, isAdmin: false },
-  { id: 'cristian', name: 'Cristian', active: true, isAdmin: false },
-  { id: 'agostina', name: 'Agostina', active: true, isAdmin: false },
+  { id: 'admin', name: 'Administrador', password: 'admin123', active: true, isAdmin: true },
+  { id: 'jazmin_merlo', name: 'Jazmin Merlo', password: 'jazmin_merlo123', active: true, isAdmin: false },
+  { id: 'jazmin_mercado', name: 'Jazmin Mercado', password: 'jazmin_mercado123', active: true, isAdmin: false },
+  { id: 'fabrizio', name: 'Fabrizio', password: 'fabrizio123', active: true, isAdmin: false },
+  { id: 'ariel', name: 'Ariel', password: 'ariel123', active: true, isAdmin: false },
+  { id: 'cande', name: 'Cande', password: 'cande123', active: true, isAdmin: false },
+  { id: 'ariana', name: 'Ariana', password: 'ariana123', active: true, isAdmin: false },
+  { id: 'manuel', name: 'Manuel', password: 'manuel123', active: true, isAdmin: false },
+  { id: 'julieta', name: 'Julieta', password: 'julieta123', active: true, isAdmin: false },
+  { id: 'lucas', name: 'Lucas', password: 'lucas123', active: true, isAdmin: false },
+  { id: 'tomas', name: 'Tomas', password: 'tomas123', active: true, isAdmin: false },
+  { id: 'cristian', name: 'Cristian', password: 'cristian123', active: true, isAdmin: false },
+  { id: 'agostina', name: 'Agostina', password: 'agostina123', active: true, isAdmin: false },
 ];
 
 const DEFAULT_OBJECTIONS = [
@@ -35,7 +35,22 @@ const DEFAULT_OBJECTIONS = [
 export const initializeDB = () => {
   if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(DEFAULT_USERS));
+  } else {
+    // Migration: add password to users if missing
+    const currentUsers = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
+    let migrated = false;
+    const migratedUsers = currentUsers.map(u => {
+      if (!u.password) {
+        u.password = u.id === 'admin' ? 'admin123' : `${u.id}123`;
+        migrated = true;
+      }
+      return u;
+    });
+    if (migrated) {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(migratedUsers));
+    }
   }
+  
   if (!localStorage.getItem(STORAGE_KEYS.OBJECTIONS)) {
     localStorage.setItem(STORAGE_KEYS.OBJECTIONS, JSON.stringify(DEFAULT_OBJECTIONS));
   }
@@ -65,7 +80,7 @@ export const addUser = (name, isAdmin = false) => {
     throw new Error('El usuario ya existe');
   }
 
-  const newUser = { id, name, active: true, isAdmin };
+  const newUser = { id, name, password: `${id}123`, active: true, isAdmin };
   users.push(newUser);
   saveUsers(users);
   return newUser;
@@ -404,4 +419,34 @@ export const updateUserEmail = (userId, email) => {
     saveUsers(users);
   }
   return users;
+};
+
+export const loginUser = (usernameId, password) => {
+  initializeDB();
+  const users = getUsers();
+  const user = users.find(u => u.id === usernameId.toLowerCase().trim());
+  if (!user) {
+    throw new Error('El usuario no existe.');
+  }
+  if (user.password !== password) {
+    throw new Error('Contraseña incorrecta.');
+  }
+  if (!user.active) {
+    throw new Error('Tu cuenta está desactivada.');
+  }
+  return user;
+};
+
+export const changePassword = (userId, currentPassword, newPassword) => {
+  const users = getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    throw new Error('Usuario no encontrado.');
+  }
+  if (user.password !== currentPassword) {
+    throw new Error('La contraseña actual es incorrecta.');
+  }
+  user.password = newPassword.trim();
+  saveUsers(users);
+  return user;
 };

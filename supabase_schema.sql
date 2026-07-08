@@ -3,11 +3,12 @@
 -- 1. Enable UUID extension if not enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Create Users Table
+-- 2. Create Users Table (with Password column for Authentication)
 CREATE TABLE IF NOT EXISTS public.users (
     id TEXT PRIMARY KEY, -- Lowercase normalized name ID
     name TEXT NOT NULL,
     email TEXT,
+    password TEXT DEFAULT 'conquer123'::text NOT NULL, -- User password (default name123, e.g. ariel123)
     active BOOLEAN DEFAULT true NOT NULL,
     is_admin BOOLEAN DEFAULT false NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -54,24 +55,24 @@ CREATE TABLE IF NOT EXISTS public.messages (
 
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
--- 6. Insert Default Users
-INSERT INTO public.users (id, name, active, is_admin)
+-- 6. Insert Default Users (with name + "123" default passwords, and admin123 for administrator)
+INSERT INTO public.users (id, name, password, active, is_admin)
 VALUES 
-    ('admin', 'Administrador', true, true),
-    ('jazmin_merlo', 'Jazmin Merlo', true, false),
-    ('jazmin_mercado', 'Jazmin Mercado', true, false),
-    ('fabrizio', 'Fabrizio', true, false),
-    ('ariel', 'Ariel', true, false),
-    ('cande', 'Cande', true, false),
-    ('ariana', 'Ariana', true, false),
-    ('manuel', 'Manuel', true, false),
-    ('julieta', 'Julieta', true, false),
-    ('lucas', 'Lucas', true, false),
-    ('tomas', 'Tomas', true, false),
-    ('cristian', 'Cristian', true, false),
-    ('agostina', 'Agostina', true, false)
+    ('admin', 'Administrador', 'admin123', true, true),
+    ('jazmin_merlo', 'Jazmin Merlo', 'jazmin_merlo123', true, false),
+    ('jazmin_mercado', 'Jazmin Mercado', 'jazmin_mercado123', true, false),
+    ('fabrizio', 'Fabrizio', 'fabrizio123', true, false),
+    ('ariel', 'Ariel', 'ariel123', true, false),
+    ('cande', 'Cande', 'cande123', true, false),
+    ('ariana', 'Ariana', 'ariana123', true, false),
+    ('manuel', 'Manuel', 'manuel123', true, false),
+    ('julieta', 'Julieta', 'julieta123', true, false),
+    ('lucas', 'Lucas', 'lucas123', true, false),
+    ('tomas', 'Tomas', 'tomas123', true, false),
+    ('cristian', 'Cristian', 'cristian123', true, false),
+    ('agostina', 'Agostina', 'agostina123', true, false)
 ON CONFLICT (id) DO UPDATE 
-SET name = EXCLUDED.name, is_admin = EXCLUDED.is_admin;
+SET name = EXCLUDED.name, password = EXCLUDED.password, is_admin = EXCLUDED.is_admin;
 
 -- 7. Insert Default Objections
 INSERT INTO public.objections (id, label)

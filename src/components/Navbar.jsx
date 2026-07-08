@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getUnreadNotifications, markMessagesAsRead } from '../services/db';
 
-const Navbar = ({ users, currentUser, onUserChange, activeTab, setActiveTab, onNotificationClick, matchesTrigger, theme, toggleTheme }) => {
+const Navbar = ({ currentUser, activeTab, setActiveTab, onNotificationClick, matchesTrigger, theme, toggleTheme }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const dropdownRef = useRef(null);
@@ -33,13 +33,6 @@ const Navbar = ({ users, currentUser, onUserChange, activeTab, setActiveTab, onN
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
-
-  const handleUserChange = (e) => {
-    const selected = users.find(u => u.id === e.target.value);
-    if (selected) {
-      onUserChange(selected);
-    }
-  };
 
   const handleNotificationItemClick = (notif) => {
     markMessagesAsRead(notif.matchId, currentUser.id);
@@ -134,9 +127,22 @@ const Navbar = ({ users, currentUser, onUserChange, activeTab, setActiveTab, onN
               ⚙️ Panel Admin
             </button>
           )}
+          <button 
+            onClick={() => setActiveTab('profile')} 
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '10px',
+              background: activeTab === 'profile' ? 'var(--primary-gradient)' : 'rgba(255, 255, 255, 0.03)',
+              color: activeTab === 'profile' ? 'white' : 'var(--text-secondary)',
+              border: activeTab === 'profile' ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
+              boxShadow: activeTab === 'profile' ? '0 4px 10px var(--primary-glow)' : 'none'
+            }}
+          >
+            👤 Perfil
+          </button>
         </nav>
 
-        {/* User Role Switcher & Notification Bell */}
+        {/* Action controls (Theme and Bell) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           
           {/* Theme Toggle Button */}
@@ -300,37 +306,8 @@ const Navbar = ({ users, currentUser, onUserChange, activeTab, setActiveTab, onN
             </div>
           )}
 
-          {/* User selector dropdown wrapper */}
+          {/* User Display Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255, 255, 255, 0.03)', padding: '0.4rem 0.8rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-              Simular:
-            </span>
-            <select 
-              value={currentUser.id} 
-              onChange={handleUserChange}
-              style={{
-                padding: '0.25rem 0.5rem',
-                fontSize: '0.85rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                background: '#0a0d20',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: 600,
-                outline: 'none'
-              }}
-            >
-              <optgroup label="Administrador" style={{ background: '#0a0d20' }}>
-                {users.filter(u => u.isAdmin).map(u => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Equipo" style={{ background: '#0a0d20' }}>
-                {users.filter(u => !u.isAdmin).map(u => (
-                  <option key={u.id} value={u.id}>{u.name} {!u.active ? '(Inactivo)' : ''}</option>
-                ))}
-              </optgroup>
-            </select>
             <span style={{
               width: '8px',
               height: '8px',
@@ -338,6 +315,9 @@ const Navbar = ({ users, currentUser, onUserChange, activeTab, setActiveTab, onN
               backgroundColor: currentUser.isAdmin ? '#a78bfa' : (currentUser.active ? 'var(--success)' : 'var(--text-muted)'),
               boxShadow: currentUser.isAdmin ? '0 0 8px #a78bfa' : (currentUser.active ? '0 0 8px var(--success)' : 'none')
             }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+              {currentUser.name}
+            </span>
           </div>
 
         </div>
