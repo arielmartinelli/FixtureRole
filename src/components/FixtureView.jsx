@@ -318,6 +318,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
           gap: '1.5rem'
         }}>
           {displayedMatches.map((match) => {
+            const isParticipant = match.user1Id === currentUser.id || match.user2Id === currentUser.id;
             const bothConfirmed = match.confirmations?.[match.user1Id] === true && match.confirmations?.[match.user2Id] === true;
             const u1Confirmed = match.confirmations?.[match.user1Id] === true;
             const u2Confirmed = match.confirmations?.[match.user2Id] === true;
