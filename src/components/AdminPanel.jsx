@@ -208,7 +208,7 @@ const AdminPanel = ({ setMatchesTrigger }) => {
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               <span>Total Miembros Registrados:</span>
-              <strong style={{ color: 'white' }}>{users.filter(u => !u.isAdmin).length}</strong>
+              <strong style={{ color: 'var(--text-primary)' }}>{users.filter(u => !u.isAdmin).length}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
               <span>Participantes Activos:</span>

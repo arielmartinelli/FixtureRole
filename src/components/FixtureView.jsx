@@ -257,7 +257,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                 borderRadius: '8px',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 background: 'rgba(255, 255, 255, 0.05)',
-                color: 'white',
+                color: 'var(--text-primary)',
                 fontSize: '0.85rem',
                 fontWeight: 600
               }}
@@ -338,8 +338,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
             
             // Highlight participant card
             const highlightStyle = (isParticipant && !currentUser.isAdmin) 
-              ? { borderLeft: '4px solid var(--primary)', background: 'rgba(99, 102, 241, 0.03)' }
-              : {};
+              ? { borderLeft: '4px solid var(--primary)', background: 'var(--card-active-bg)' }
+              : { background: 'var(--card-bg)' };
               
             return (
               <div 
