@@ -21,6 +21,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
   const [markingMatchId, setMarkingMatchId] = useState(null);
   const [markStatus, setMarkStatus] = useState('Realizado');
   const [failReason, setFailReason] = useState('');
+  const [attendanceType, setAttendanceType] = useState('both_attended');
+  const [attendanceDetail, setAttendanceDetail] = useState('');
 
   // Feedback & Rating states
   const [rating, setRating] = useState(5);
@@ -177,12 +179,32 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
   };
 
   const handleMarkStatus = async (matchId) => {
-    if (markStatus === 'No Realizado' && !failReason.trim()) {
-      alert('Por favor, indica la razón de la inasistencia.');
+    let finalStatus = 'Realizado';
+    let finalFailReason = '';
+
+    if (attendanceType !== 'both_attended') {
+      finalStatus = 'No Realizado';
+      const matchObj = matches.find(m => m.id === matchId);
+      const partnerId = matchObj?.user1Id === currentUser.id ? matchObj?.user2Id : matchObj?.user1Id;
+      const partnerName = getUserName(partnerId);
+
+      if (attendanceType === 'partner_missed') {
+        finalFailReason = `Faltó el compañero (${partnerName})${attendanceDetail.trim() ? ': ' + attendanceDetail.trim() : ''}`;
+      } else if (attendanceType === 'i_missed') {
+        finalFailReason = `Falté yo${attendanceDetail.trim() ? ': ' + attendanceDetail.trim() : ''}`;
+      } else if (attendanceType === 'both_missed') {
+        finalFailReason = `Faltamos ambos${attendanceDetail.trim() ? ': ' + attendanceDetail.trim() : ''}`;
+      } else {
+        finalFailReason = `Inconveniente${attendanceDetail.trim() ? ': ' + attendanceDetail.trim() : ''}`;
+      }
+    }
+
+    if (finalStatus === 'No Realizado' && !finalFailReason.trim()) {
+      alert('Por favor, indica un motivo o detalle de la inasistencia.');
       return;
     }
 
-    if (markStatus === 'Realizado') {
+    if (finalStatus === 'Realizado') {
       const matchObj = matches.find(m => m.id === matchId);
       const isParticipant = matchObj?.user1Id === currentUser.id || matchObj?.user2Id === currentUser.id;
       if (isParticipant && feedbackComment.trim()) {
@@ -191,8 +213,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
     }
 
     await updateMatch(matchId, {
-      status: markStatus,
-      failReason: markStatus === 'No Realizado' ? failReason : '',
+      status: finalStatus,
+      failReason: finalFailReason,
       updatedBy: currentUser.name
     });
     
@@ -200,6 +222,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
     setFailReason('');
     setFeedbackComment('');
     setRating(5);
+    setAttendanceType('both_attended');
+    setAttendanceDetail('');
     setMatchesTrigger(prev => prev + 1);
   };
 
@@ -225,6 +249,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
     setMarkingMatchId(match.id);
     setMarkStatus(match.status === 'Pendiente' ? 'Realizado' : match.status);
     setFailReason(match.failReason || '');
+    setAttendanceType('both_attended');
+    setAttendanceDetail('');
     setEditingMatchId(null); // Close reschedule editor
   };
 
@@ -603,51 +629,52 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
 
                 {markingMatchId === match.id && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--card-highlight-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-highlight-border)' }}>
-                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>📝 Registrar Resultado</h4>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>📝 Registrar Asistencia y Resultado</h4>
                     
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button 
-                        onClick={() => setMarkStatus('Realizado')}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>¿Quiénes asistieron?:</label>
+                      <select
+                        value={attendanceType}
+                        onChange={(e) => setAttendanceType(e.target.value)}
                         style={{
-                          flex: 1,
-                          padding: '0.4rem',
+                          width: '100%',
+                          padding: '0.4rem 0.75rem',
                           fontSize: '0.8rem',
-                          background: markStatus === 'Realizado' ? 'var(--success)' : 'var(--card-highlight-bg)',
-                          color: 'white',
-                          border: '1px solid var(--card-highlight-border)'
+                          background: 'var(--bg-dark)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--panel-border)'
                         }}
                       >
-                        ✅ Realizado
-                      </button>
-                      <button 
-                        onClick={() => setMarkStatus('No Realizado')}
-                        style={{
-                          flex: 1,
-                          padding: '0.4rem',
-                          fontSize: '0.8rem',
-                          background: markStatus === 'No Realizado' ? 'var(--danger)' : 'var(--card-highlight-bg)',
-                          color: 'white',
-                          border: '1px solid var(--card-highlight-border)'
-                        }}
-                      >
-                        ❌ No Realizado
-                      </button>
+                        <option value="both_attended">✅ Ambos asistieron (Realizado)</option>
+                        <option value="partner_missed">❌ Faltó mi compañero ({partnerName})</option>
+                        <option value="i_missed">❌ Falté yo</option>
+                        <option value="both_missed">❌ Faltamos ambos</option>
+                        <option value="other">⚠️ Otro inconveniente / coordinación</option>
+                      </select>
                     </div>
 
-                    {markStatus === 'No Realizado' && (
+                    {attendanceType !== 'both_attended' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>¿Por qué no se realizó?:</label>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Indica el porqué / motivo:</label>
                         <input 
                           type="text" 
-                          value={failReason} 
-                          onChange={(e) => setFailReason(e.target.value)} 
-                          placeholder="Ej. Falta de tiempo, inasistencia de compañero"
-                          style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                          value={attendanceDetail} 
+                          onChange={(e) => setAttendanceDetail(e.target.value)} 
+                          placeholder="Ej. Se canceló a último momento, corte de luz, etc."
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '0.8rem',
+                            background: 'var(--bg-dark)',
+                            color: 'var(--text-primary)',
+                            borderRadius: '8px',
+                            border: '1px solid var(--panel-border)'
+                          }}
                         />
                       </div>
                     )}
 
-                    {markStatus === 'Realizado' && isParticipant && (
+                    {attendanceType === 'both_attended' && isParticipant && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem', borderTop: '1px dashed var(--card-highlight-border)', paddingTop: '0.75rem' }}>
                         <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>⭐ Calificación al compañero:</label>
                         <div style={{ display: 'flex', gap: '0.25rem' }}>
@@ -674,14 +701,14 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                         <textarea
                           value={feedbackComment}
                           onChange={(e) => setFeedbackComment(e.target.value)}
-                          placeholder="Escribe comentarios, qué hizo bien y qué puede mejorar..."
+                          placeholder="Escribe comentarios, qué hizo bien y qué puede mejorar comercialmente..."
                           style={{
                             width: '100%',
                             height: '60px',
                             fontSize: '0.8rem',
                             padding: '0.4rem 0.6rem',
-                            background: 'rgba(0,0,0,0.15)',
-                            border: '1px solid rgba(255,255,255,0.1)',
+                            background: 'var(--bg-dark)',
+                            border: '1px solid var(--panel-border)',
                             borderRadius: '8px',
                             color: 'var(--text-primary)',
                             resize: 'none'
@@ -696,7 +723,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                         className="btn-success" 
                         style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem' }}
                       >
-                        Confirmar
+                        Confirmar Registro
                       </button>
                       <button 
                         onClick={() => setMarkingMatchId(null)} 
@@ -829,7 +856,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                 )}
 
                 {/* Interaction Row (Chat, Modify, Mark) */}
-                <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: 'auto' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid var(--panel-border)', paddingTop: '1rem', marginTop: 'auto' }}>
                   {isParticipant && (
                     <button 
                       onClick={() => onOpenChat(match.id)} 
@@ -840,7 +867,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                     </button>
                   )}
 
-                  {isParticipant && match.status === 'Pendiente' && (
+                  {isParticipant && match.status === 'Pendiente' && bothConfirmed && (
                     <button 
                       onClick={() => {
                         setSchedulingMatchId(schedulingMatchId === match.id ? null : match.id);
@@ -854,25 +881,26 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                     </button>
                   )}
                   
-                  {canModify && editingMatchId !== match.id && markingMatchId !== match.id && (
-                    <>
-                      <button 
-                        onClick={() => startEditing(match)} 
-                        className="btn-secondary" 
-                        style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
-                        title="Reprogramar fecha y objeción"
-                      >
-                        📅 Editar
-                      </button>
-                      <button 
-                        onClick={() => startMarking(match)} 
-                        className="btn-secondary" 
-                        style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
-                        title="Marcar asistencia / estado"
-                      >
-                        ✍️ Registrar
-                      </button>
-                    </>
+                  {editingMatchId !== match.id && markingMatchId !== match.id && (currentUser.isAdmin || (isParticipant && match.status === 'Pendiente' && !bothConfirmed)) && (
+                    <button 
+                      onClick={() => startEditing(match)} 
+                      className="btn-secondary" 
+                      style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                      title="Reprogramar fecha y objeción"
+                    >
+                      📅 Editar
+                    </button>
+                  )}
+
+                  {editingMatchId !== match.id && markingMatchId !== match.id && (currentUser.isAdmin || (isParticipant && match.status === 'Pendiente' && bothConfirmed)) && (
+                    <button 
+                      onClick={() => startMarking(match)} 
+                      className="btn-secondary" 
+                      style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                      title="Marcar asistencia / estado"
+                    >
+                      ✍️ Registrar
+                    </button>
                   )}
                 </div>
 
