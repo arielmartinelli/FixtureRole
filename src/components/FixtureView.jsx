@@ -448,7 +448,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                     fontSize: '0.8rem'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 600, color: bothConfirmed ? '#4ade80' : 'var(--text-secondary)' }}>
+                      <span style={{ fontWeight: 600, color: bothConfirmed ? 'var(--success)' : 'var(--text-secondary)' }}>
                         {bothConfirmed ? '🤝 ¡Horario Pactado y Confirmado!' : '📅 Confirmación de Acuerdo:'}
                       </span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
@@ -459,13 +459,13 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                     <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <span>Tú:</span>
-                        <span style={{ color: iAmConfirmed ? '#4ade80' : 'var(--text-muted)', fontWeight: 'bold' }}>
+                        <span style={{ color: iAmConfirmed ? 'var(--success)' : 'var(--text-muted)', fontWeight: 'bold' }}>
                           {iAmConfirmed ? '✓ Aceptado' : '⏳ Pendiente'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <span>{partnerName.split(' ')[0]}:</span>
-                        <span style={{ color: partnerConfirmed ? '#4ade80' : 'var(--text-muted)', fontWeight: 'bold' }}>
+                        <span style={{ color: partnerConfirmed ? 'var(--success)' : 'var(--text-muted)', fontWeight: 'bold' }}>
                           {partnerConfirmed ? '✓ Aceptado' : '⏳ Pendiente'}
                         </span>
                       </div>
@@ -565,7 +565,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                         textAlign: 'center',
                         marginTop: '0.25rem'
                       }}>
-                        📅 Vista previa: <strong style={{ color: '#818cf8' }}>{formatSpanishDateTime(editDate, editHour, editMinute)}</strong>
+                        📅 Vista previa: <strong style={{ color: 'var(--primary)' }}>{formatSpanishDateTime(editDate, editHour, editMinute)}</strong>
                       </div>
                     </div>
                     

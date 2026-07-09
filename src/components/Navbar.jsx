@@ -75,7 +75,7 @@ const Navbar = ({ currentUser, activeTab, setActiveTab, onNotificationClick, mat
             C
           </div>
           <div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, background: 'linear-gradient(90deg, #fff 0%, #a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, background: 'var(--title-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               CONQUER FIXTURE
             </h1>
             <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0, fontWeight: 500, letterSpacing: '0.05em' }}>

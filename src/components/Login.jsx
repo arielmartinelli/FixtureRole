@@ -87,7 +87,7 @@ const Login = ({ onLoginSuccess }) => {
             C
           </div>
           <div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, background: 'linear-gradient(90deg, #fff 0%, #a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, background: 'var(--title-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               CONQUER FIXTURE
             </h2>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0', fontWeight: 600, letterSpacing: '0.05em' }}>
