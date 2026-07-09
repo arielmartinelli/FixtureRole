@@ -417,7 +417,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                 </div>
 
                 {/* Details (Date & Objection) */}
-                <div style={{ background: 'rgba(0,0,0,0.15)', padding: '0.85rem 1rem', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <div style={{ background: 'var(--card-highlight-bg)', border: '1px solid var(--card-highlight-border)', padding: '0.85rem 1rem', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>📅 Horario:</span>
                     <span style={{ fontWeight: 600 }}>{match.dateTime}</span>
@@ -427,7 +427,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                     <span style={{ fontWeight: 700, color: 'var(--warning)' }}>{currentObjection}</span>
                   </div>
                   {match.status === 'No Realizado' && match.failReason && (
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem', marginTop: '0.25rem', color: 'var(--danger)', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    <div style={{ borderTop: '1px solid var(--card-highlight-border)', paddingTop: '0.5rem', marginTop: '0.25rem', color: 'var(--danger)', fontSize: '0.8rem', fontStyle: 'italic' }}>
                       <strong>Motivo:</strong> "{match.failReason}"
                     </div>
                   )}
@@ -440,8 +440,8 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                     borderRadius: '10px',
                     background: bothConfirmed 
                       ? 'rgba(34, 197, 94, 0.08)' 
-                      : 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid ' + (bothConfirmed ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255, 255, 255, 0.05)'),
+                      : 'var(--card-highlight-bg)',
+                    border: '1px solid ' + (bothConfirmed ? 'rgba(34, 197, 94, 0.25)' : 'var(--card-highlight-border)'),
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.5rem',
@@ -511,7 +511,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
 
                 {/* Editor Forms */}
                 {editingMatchId === match.id && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--card-highlight-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-highlight-border)' }}>
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>📅 Reprogramar Cruce</h4>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -558,10 +558,10 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
 
                       <div style={{ 
                         fontSize: '0.75rem', 
-                        background: 'rgba(255,255,255,0.03)', 
+                        background: 'var(--card-highlight-bg)', 
                         padding: '0.5rem', 
                         borderRadius: '8px', 
-                        border: '1px dashed rgba(255,255,255,0.08)',
+                        border: '1px dashed var(--card-highlight-border)',
                         textAlign: 'center',
                         marginTop: '0.25rem'
                       }}>
@@ -602,7 +602,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                 )}
 
                 {markingMatchId === match.id && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--card-highlight-bg)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--card-highlight-border)' }}>
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>📝 Registrar Resultado</h4>
                     
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -612,9 +612,9 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                           flex: 1,
                           padding: '0.4rem',
                           fontSize: '0.8rem',
-                          background: markStatus === 'Realizado' ? 'var(--success)' : 'rgba(255,255,255,0.05)',
+                          background: markStatus === 'Realizado' ? 'var(--success)' : 'var(--card-highlight-bg)',
                           color: 'white',
-                          border: '1px solid rgba(255,255,255,0.1)'
+                          border: '1px solid var(--card-highlight-border)'
                         }}
                       >
                         ✅ Realizado
@@ -625,9 +625,9 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                           flex: 1,
                           padding: '0.4rem',
                           fontSize: '0.8rem',
-                          background: markStatus === 'No Realizado' ? 'var(--danger)' : 'rgba(255,255,255,0.05)',
+                          background: markStatus === 'No Realizado' ? 'var(--danger)' : 'var(--card-highlight-bg)',
                           color: 'white',
-                          border: '1px solid rgba(255,255,255,0.1)'
+                          border: '1px solid var(--card-highlight-border)'
                         }}
                       >
                         ❌ No Realizado
@@ -648,7 +648,7 @@ const FixtureView = ({ currentUser, onOpenChat, matchesTrigger, setMatchesTrigge
                     )}
 
                     {markStatus === 'Realizado' && isParticipant && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem', borderTop: '1px dashed var(--card-highlight-border)', paddingTop: '0.75rem' }}>
                         <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>⭐ Calificación al compañero:</label>
                         <div style={{ display: 'flex', gap: '0.25rem' }}>
                           {[1, 2, 3, 4, 5].map((num) => (

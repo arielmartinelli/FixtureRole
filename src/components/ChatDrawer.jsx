@@ -72,10 +72,10 @@ const ChatDrawer = ({ matchId, currentUser, onClose }) => {
       width: '450px',
       maxWidth: '100%',
       height: '100vh',
-      background: 'rgba(7, 9, 19, 0.95)',
+      background: 'var(--drawer-bg)',
       backdropFilter: 'blur(16px)',
-      boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.5)',
-      borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+      boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.25)',
+      borderLeft: '1px solid var(--drawer-border)',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 1000,
@@ -85,7 +85,7 @@ const ChatDrawer = ({ matchId, currentUser, onClose }) => {
       {/* Drawer Header */}
       <div style={{
         padding: '1.25rem 1.5rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        borderBottom: '1px solid var(--drawer-border)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
@@ -207,10 +207,10 @@ const ChatDrawer = ({ matchId, currentUser, onClose }) => {
         onSubmit={handleSend}
         style={{
           padding: '1.25rem 1.5rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          borderTop: '1px solid var(--drawer-border)',
           display: 'flex',
           gap: '0.75rem',
-          background: 'rgba(0, 0, 0, 0.2)'
+          background: 'var(--card-highlight-bg)'
         }}
       >
         <input 
@@ -221,7 +221,7 @@ const ChatDrawer = ({ matchId, currentUser, onClose }) => {
           style={{
             flex: 1,
             padding: '0.75rem 1rem',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'var(--bg-dark)',
             borderRadius: '12px',
             border: '1px solid rgba(255, 255, 255, 0.08)',
             fontSize: '0.85rem'

@@ -29,6 +29,10 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --title-gradient: linear-gradient(90deg, #ffffff 0%, #a5b4fc 100%);
+  --card-highlight-bg: rgba(0, 0, 0, 0.2);
+  --card-highlight-border: rgba(255, 255, 255, 0.05);
+  --drawer-bg: rgba(7, 9, 19, 0.95);
+  --drawer-border: rgba(255, 255, 255, 0.08);
   
   /* Glassmorphism settings */
   --glass-blur: blur(12px);
@@ -72,6 +76,10 @@
   --text-secondary: #475569;
   --text-muted: #94a3b8;
   --title-gradient: linear-gradient(90deg, #0f172a 0%, #4f46e5 100%);
+  --card-highlight-bg: rgba(15, 23, 42, 0.04);
+  --card-highlight-border: rgba(15, 23, 42, 0.06);
+  --drawer-bg: rgba(248, 250, 252, 0.95);
+  --drawer-border: rgba(15, 23, 42, 0.08);
   
   --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.06);
   --glow-opacity: 0.04;
